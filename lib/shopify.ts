@@ -76,7 +76,26 @@ async function shopifyFetch<TData>(query: string, variables?: Record<string, unk
 type ProductsQueryResult = {
   products: {
     edges: Array<{
-      node: ProductListItem;
+      node: {
+        title: string;
+        handle: string;
+        featuredImage: {
+          url: string;
+          altText: string | null;
+        } | null;
+        priceRange: {
+          minVariantPrice: {
+            amount: string;
+            currencyCode: string;
+          };
+        };
+        categoryMetafield: {
+          value: string;
+        } | null;
+        modelMetafield: {
+          value: string;
+        } | null;
+      };
     }>;
   };
 };
@@ -134,6 +153,12 @@ const PRODUCTS_QUERY = `
               currencyCode
             }
           }
+          categoryMetafield: metafield(namespace: "custom", key: "category") {
+            value
+          }
+          modelMetafield: metafield(namespace: "custom", key: "model") {
+            value
+          }
         }
       }
     }
@@ -180,7 +205,129 @@ const PRODUCT_BY_HANDLE_QUERY = `
 
 export async function getAllProducts(): Promise<ProductListItem[]> {
   const data = await shopifyFetch<ProductsQueryResult>(PRODUCTS_QUERY);
-  return data.products.edges.map((edge) => edge.node);
+  return data.products.edges.map(({ node }) => ({
+    title: node.title,
+    handle: node.handle,
+    featuredImage: node.featuredImage,
+    priceRange: node.priceRange,
+    category: node.categoryMetafield?.value ?? null,
+    model: node.modelMetafield?.value ?? null
+  }));
+}
+
+/**
+ * Returns all products with category/model metafields normalized into list items.
+ */
+export async function getAllProductsWithMeta(): Promise<ProductListItem[]> {
+  return getAllProducts();
+}
+
+function normalizeMetaValue(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+}
+
+/**
+ * Discovers unique case model slugs from Shopify metafields.
+ * Sorts by newest iPhone generation first when slug follows iphone-{number} pattern.
+ */
+export async function getDiscoveredModels(): Promise<string[]> {
+  const products = await getAllProductsWithMeta();
+  const modelSet = new Set<string>();
+
+  for (const product of products) {
+    const category = normalizeMetaValue(product.category);
+    const model = normalizeMetaValue(product.model);
+    if (category === "case" && model) {
+      modelSet.add(model);
+    }
+  }
+
+  const models = Array.from(modelSet);
+  models.sort((a, b) => {
+    const aMatch = a.match(/^iphone-(\d+)(?:-.+)?$/);
+    const bMatch = b.match(/^iphone-(\d+)(?:-.+)?$/);
+    const aGen = aMatch ? Number.parseInt(aMatch[1], 10) : Number.NaN;
+    const bGen = bMatch ? Number.parseInt(bMatch[1], 10) : Number.NaN;
+
+    const aHasGen = Number.isFinite(aGen);
+    const bHasGen = Number.isFinite(bGen);
+    if (aHasGen && bHasGen && aGen !== bGen) {
+      return bGen - aGen;
+    }
+    if (aHasGen && !bHasGen) {
+      return -1;
+    }
+    if (!aHasGen && bHasGen) {
+      return 1;
+    }
+    return b.localeCompare(a);
+  });
+
+  return models;
+}
+
+const ACCESSORY_CATEGORIES = new Set(["wallet", "charger", "cable"]);
+
+function normalizedCategory(product: ProductListItem): string | null {
+  return normalizeMetaValue(product.category);
+}
+
+function normalizedModel(product: ProductListItem): string | null {
+  return normalizeMetaValue(product.model);
+}
+
+/**
+ * Filters case products for a given model slug using metafield-backed category/model rules.
+ */
+export function filterCaseProductsByModel(products: ProductListItem[], modelSlug: string): ProductListItem[] {
+  const normalizedModelSlug = normalizeMetaValue(modelSlug);
+  if (!normalizedModelSlug) {
+    return [];
+  }
+
+  return products.filter((product) => {
+    const category = normalizedCategory(product);
+    const model = normalizedModel(product);
+    return category === "case" && model === normalizedModelSlug;
+  });
+}
+
+/**
+ * Filters accessory products by category metafield.
+ */
+export function filterAccessoryProducts(products: ProductListItem[]): ProductListItem[] {
+  return products.filter((product) => {
+    const category = normalizedCategory(product);
+    return category ? ACCESSORY_CATEGORIES.has(category) : false;
+  });
+}
+
+/**
+ * Fetches all case products for a model slug.
+ */
+export async function getCaseProductsByModel(modelSlug: string): Promise<ProductListItem[]> {
+  const products = await getAllProductsWithMeta();
+  return filterCaseProductsByModel(products, modelSlug);
+}
+
+/**
+ * Fetches all accessory products.
+ */
+export async function getAccessoryProducts(): Promise<ProductListItem[]> {
+  const data = await shopifyFetch<ProductsQueryResult>(PRODUCTS_QUERY);
+  const products = data.products.edges.map(({ node }) => ({
+    title: node.title,
+    handle: node.handle,
+    featuredImage: node.featuredImage,
+    priceRange: node.priceRange,
+    category: node.categoryMetafield?.value ?? null,
+    model: node.modelMetafield?.value ?? null
+  }));
+  return filterAccessoryProducts(products);
 }
 
 /**

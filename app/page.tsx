@@ -5,8 +5,8 @@
 import Link from "next/link";
 
 import ProductCard from "@/components/ProductCard";
-import { COLLECTIONS } from "@/lib/collections";
-import { getAllProducts } from "@/lib/shopify";
+import { formatModelLabel } from "@/lib/format";
+import { getAllProducts, getDiscoveredModels } from "@/lib/shopify";
 
 /**
  * HomePage
@@ -14,7 +14,7 @@ import { getAllProducts } from "@/lib/shopify";
  */
 export default async function HomePage() {
   try {
-    const products = await getAllProducts();
+    const [products, models] = await Promise.all([getAllProducts(), getDiscoveredModels()]);
 
     return (
       <div className="space-y-10">
@@ -25,15 +25,21 @@ export default async function HomePage() {
             Minimal case design, reliable daily protection, and secure Shopify checkout.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            {COLLECTIONS.map((collection) => (
+            {models.map((model) => (
               <Link
-                key={collection.slug}
-                href={`/collections/${collection.slug}`}
+                key={model}
+                href={`/collections/models/${model}`}
                 className="rounded-md bg-white/10 px-4 py-2 text-sm font-medium hover:bg-white/20"
               >
-                {collection.label}
+                {formatModelLabel(model)}
               </Link>
             ))}
+            <Link
+              href="/collections/accessories"
+              className="rounded-md bg-white/10 px-4 py-2 text-sm font-medium hover:bg-white/20"
+            >
+              Accessories
+            </Link>
           </div>
         </section>
 

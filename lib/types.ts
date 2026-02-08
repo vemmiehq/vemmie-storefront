@@ -23,6 +23,8 @@ export type ProductListItem = {
   priceRange: {
     minVariantPrice: Money;
   };
+  category: string | null;
+  model: string | null;
 };
 
 export type ProductVariant = {
