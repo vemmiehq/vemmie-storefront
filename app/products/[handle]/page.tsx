@@ -1,12 +1,3 @@
-/**
- * Server-rendered PDP route.
- * Fetches product data securely, handles not-found/error states, and hands interactive UI
- * to the client wrapper component.
- *
- * Architecture note:
- * This route only passes plain JSON-safe product data to the client component so hydration
- * remains deterministic and serialization is guaranteed by React/Next boundaries.
- */
 import { notFound } from "next/navigation";
 
 import ProductPdpClient from "@/components/ProductPdpClient";
@@ -18,11 +9,6 @@ type ProductPageProps = {
   };
 };
 
-/**
- * ProductPage
- * Params in: product handle from the dynamic route segment.
- * UI out: PDP client controller when data is available, otherwise 404/friendly error UI.
- */
 export default async function ProductPage({ params }: ProductPageProps) {
   const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
   if (!storeDomain) {
@@ -39,7 +25,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
       notFound();
     }
 
-    return <ProductPdpClient product={product} storeDomain={storeDomain} />;
+    return (
+      <ProductPdpClient
+        title={product.title}
+        description={product.description}
+        featuredImage={product.featuredImage}
+        images={product.images}
+        variants={product.variants}
+        storeDomain={storeDomain}
+      />
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     if (message.toLowerCase().includes("not found")) {

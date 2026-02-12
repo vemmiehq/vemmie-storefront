@@ -2,10 +2,31 @@
  * Server-rendered collections hub.
  * Discovers case models from Shopify metafields and links users into model/accessory collection pages.
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { formatModelLabel } from "@/lib/format";
+import { absoluteUrl } from "@/lib/site";
 import { getDiscoveredModels } from "@/lib/shopify";
+
+export const metadata: Metadata = {
+  title: "Collections",
+  description: "Browse Vemmie collections by device model and accessories.",
+  alternates: {
+    canonical: absoluteUrl("/collections"),
+  },
+  openGraph: {
+    title: "Collections",
+    description: "Browse Vemmie collections by device model and accessories.",
+    url: absoluteUrl("/collections"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Collections",
+    description: "Browse Vemmie collections by device model and accessories.",
+  },
+};
 
 export default async function CollectionsHubPage() {
   try {
@@ -19,10 +40,13 @@ export default async function CollectionsHubPage() {
         </div>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-slate-900">Shop by Model</h2>
+          <h2 className="text-xl font-semibold text-slate-900">
+            Shop by Model
+          </h2>
           {models.length === 0 ? (
             <p className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              No case models found. In Shopify, set custom.category=&quot;case&quot; and custom.model on products.
+              No case models found. In Shopify, set
+              custom.category=&quot;case&quot; and custom.model on products.
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -55,7 +79,8 @@ export default async function CollectionsHubPage() {
   } catch {
     return (
       <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Could not load collections from Shopify. Check your Storefront API credentials and Headless channel access.
+        Could not load collections from Shopify. Check your Storefront API
+        credentials and Headless channel access.
       </div>
     );
   }

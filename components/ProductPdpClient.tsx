@@ -1,44 +1,41 @@
-/**
- * Client-side Product Detail Page controller.
- * Owns interactive PDP state and coordinates image switching with variant selection.
- *
- * Architecture note:
- * PDP interaction logic lives in a client wrapper because variant changes are immediate
- * browser interactions that do not require a server round-trip.
- */
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { ProductDetail, ProductVariant } from "@/lib/types";
+import type { ProductImage, ProductVariant } from "@/lib/types";
 import VariantSelector from "@/components/VariantSelector";
 
 type ProductPdpClientProps = {
-  product: ProductDetail;
+  title: string;
+  description: string;
+  featuredImage: ProductImage | null;
+  images: ProductImage[];
+  variants: ProductVariant[];
   storeDomain: string;
 };
 
-/**
- * ProductPdpClient
- * Props in: a serialized product payload from the server plus Shopify domain.
- * UI out: image panel + product details + variant purchase controls.
- */
 export default function ProductPdpClient({
-  product,
+  title,
+  description,
+  featuredImage,
+  images,
+  variants,
   storeDomain,
 }: ProductPdpClientProps) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    product.variants[0] ?? null,
+    variants[0] ?? null,
   );
 
-  /**
-   * Prefer variant-specific imagery, then product gallery fallback, then featured image.
-   * This keeps the PDP visually stable even if some variants do not have dedicated images.
-   */
+  // ✅ Micro-fix: when navigating to a new product (new variants array),
+  // reset the selected variant to the first option.
+  useEffect(() => {
+    setSelectedVariant(variants[0] ?? null);
+  }, [variants]);
+
   const selectedImage = useMemo(() => {
-    return selectedVariant?.image ?? product.images[0] ?? product.featuredImage;
-  }, [product.featuredImage, product.images, selectedVariant]);
+    return selectedVariant?.image ?? images[0] ?? featuredImage ?? null;
+  }, [featuredImage, images, selectedVariant]);
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -46,7 +43,7 @@ export default function ProductPdpClient({
         {selectedImage ? (
           <Image
             src={selectedImage.url}
-            alt={selectedImage.altText ?? product.title}
+            alt={selectedImage.altText ?? title}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -59,12 +56,11 @@ export default function ProductPdpClient({
       </div>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold text-slate-900">{product.title}</h1>
-        {product.description ? (
-          <p className="text-slate-600">{product.description}</p>
-        ) : null}
+        <h1 className="text-3xl font-semibold text-slate-900">{title}</h1>
+        {description ? <p className="text-slate-600">{description}</p> : null}
+
         <VariantSelector
-          variants={product.variants}
+          variants={variants}
           storeDomain={storeDomain}
           onSelectedVariantChange={setSelectedVariant}
         />

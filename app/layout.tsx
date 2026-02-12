@@ -3,12 +3,32 @@ import type { ReactNode } from "react";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Vemmie",
-  description: "Vemmie headless storefront."
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description:
+    "Shop Vemmie protective cases and accessories with secure Shopify checkout.",
+  alternates: {
+    canonical: absoluteUrl("/"),
+  },
+  openGraph: {
+    siteName: SITE_NAME,
+    type: "website",
+    url: absoluteUrl("/"),
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_NAME,
+    description:
+      "Shop Vemmie protective cases and accessories with secure Shopify checkout.",
+  },
 };
 
 type RootLayoutProps = {

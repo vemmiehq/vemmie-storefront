@@ -2,22 +2,10 @@
  * Dynamic XML sitemap route.
  * Includes core pages, discovered model collections, accessories, PDPs, and optional policy/contact pages.
  */
-import { existsSync } from "node:fs";
-import path from "node:path";
-
 import { getAllProductsWithMeta, getDiscoveredModels } from "@/lib/shopify";
+import { absoluteUrl } from "@/lib/site";
 
-const STATIC_PATHS = ["/", "/collections", "/collections/accessories"];
-const OPTIONAL_PAGES = ["/contact", "/policies", "/privacy-policy", "/refund-policy", "/shipping-policy", "/terms"];
-const PAGE_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js", ".mdx", ".md"];
-
-function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.vemmie.com";
-}
-
-function toAbsoluteUrl(pathname: string): string {
-  return `${getBaseUrl()}${pathname}`;
-}
+const STATIC_PATHS = ["/", "/collections", "/collections/accessories", "/shipping-returns", "/privacy", "/terms", "/contact"];
 
 function xmlEscape(value: string): string {
   return value
@@ -28,29 +16,23 @@ function xmlEscape(value: string): string {
     .replaceAll("'", "&apos;");
 }
 
-function appRouteExists(pathname: string): boolean {
-  const segments = pathname.split("/").filter(Boolean);
-  const routeDir = path.join(process.cwd(), "app", ...segments);
-  return PAGE_EXTENSIONS.some((extension) => existsSync(path.join(routeDir, `page${extension}`)));
-}
-
-function buildUrlNode(url: string): string {
-  return `<url><loc>${xmlEscape(url)}</loc></url>`;
+function buildUrlNode(url: string, lastmod: string): string {
+  return `<url><loc>${xmlEscape(url)}</loc><lastmod>${xmlEscape(lastmod)}</lastmod></url>`;
 }
 
 export async function GET() {
   const [products, models] = await Promise.all([getAllProductsWithMeta(), getDiscoveredModels()]);
 
-  const optionalRoutes = OPTIONAL_PAGES.filter((pathname) => appRouteExists(pathname));
   const productRoutes = products.map((product) => `/products/${product.handle}`);
   const modelRoutes = models.map((model) => `/collections/models/${model}`);
 
-  const allPaths = [...STATIC_PATHS, ...optionalRoutes, ...modelRoutes, ...productRoutes];
+  const allPaths = [...STATIC_PATHS, ...modelRoutes, ...productRoutes];
   const deduped = Array.from(new Set(allPaths));
+  const lastmod = new Date().toISOString();
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${deduped.map((pathname) => buildUrlNode(toAbsoluteUrl(pathname))).join("\n")}
+${deduped.map((pathname) => buildUrlNode(absoluteUrl(pathname), lastmod)).join("\n")}
 </urlset>`;
 
   return new Response(body, {

@@ -5,18 +5,26 @@
 import type { Metadata } from "next";
 
 import ProductCard from "@/components/ProductCard";
+import { absoluteUrl } from "@/lib/site";
 import { getAccessoryProducts } from "@/lib/shopify";
 
-function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.vemmie.com";
-}
-
 export const metadata: Metadata = {
-  title: "Accessories | Vemmie",
+  title: "Accessories",
   description: "Shop Vemmie wallets, chargers, and cables.",
   alternates: {
-    canonical: `${getBaseUrl()}/collections/accessories`
-  }
+    canonical: absoluteUrl("/collections/accessories"),
+  },
+  openGraph: {
+    title: "Accessories",
+    description: "Shop Vemmie wallets, chargers, and cables.",
+    url: absoluteUrl("/collections/accessories"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Accessories",
+    description: "Shop Vemmie wallets, chargers, and cables.",
+  },
 };
 
 export default async function AccessoriesCollectionPage() {
@@ -29,7 +37,8 @@ export default async function AccessoriesCollectionPage() {
 
         {products.length === 0 ? (
           <p className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            No accessories found. In Shopify, set custom.category to wallet, charger, or cable.
+            No accessories found. In Shopify, set custom.category to wallet,
+            charger, or cable.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,7 +52,8 @@ export default async function AccessoriesCollectionPage() {
   } catch {
     return (
       <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Could not load products from Shopify. Check your Storefront API credentials and Headless channel access.
+        Could not load products from Shopify. Check your Storefront API
+        credentials and Headless channel access.
       </div>
     );
   }

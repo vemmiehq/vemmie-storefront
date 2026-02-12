@@ -8,11 +8,6 @@ Tier-1 headless commerce storefront for `www.vemmie.com`, with Shopify as the sy
 - Collections hub with dynamic model tiles + accessories
 - Dynamic model collection pages: `/collections/models/[model]`
 - Accessories collection page: `/collections/accessories`
-- Backward-compatible model URLs (redirect to canonical model routes):
-  - `/collections/iphone-17`
-  - `/collections/iphone-17-pro`
-  - `/collections/iphone-17-air`
-  - `/collections/iphone-17-pro-max`
 - Product detail page: `/products/[handle]`
 - Variant (color) selection with price update
 - Shopify cart + checkout redirects using numeric variant ID:
@@ -93,7 +88,6 @@ lib/
 ## Routing notes
 
 - Canonical model collection route: `/collections/models/<model>`
-- Legacy model URLs under `/collections/<slug>` redirect to canonical model routes.
 - Collections and sitemap entries update automatically when new `case` products with `custom.model` are added.
 
 ## Cache / revalidation

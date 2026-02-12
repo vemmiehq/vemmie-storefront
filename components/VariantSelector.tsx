@@ -17,6 +17,7 @@ type VariantSelectorProps = {
   variants: ProductVariant[];
   storeDomain: string;
   onSelectedVariantChange?: (variant: ProductVariant) => void;
+  onBeginCheckout?: (variant: ProductVariant) => void;
 };
 
 /**
@@ -32,6 +33,7 @@ export default function VariantSelector({
   variants,
   storeDomain,
   onSelectedVariantChange,
+  onBeginCheckout,
 }: VariantSelectorProps) {
   const [selectedVariantId, setSelectedVariantId] = useState<string>(
     variants[0]?.id ?? "",
@@ -114,7 +116,9 @@ export default function VariantSelector({
           onClick={(event) => {
             if (!selectedVariant.availableForSale) {
               event.preventDefault();
+              return;
             }
+            onBeginCheckout?.(selectedVariant);
           }}
         >
           Buy Now

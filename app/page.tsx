@@ -2,11 +2,35 @@
  * Server-rendered storefront home route.
  * Composes hero messaging, model navigation links, and the featured product grid.
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import ProductCard from "@/components/ProductCard";
 import { formatModelLabel } from "@/lib/format";
+import { absoluteUrl } from "@/lib/site";
 import { getAllProducts, getDiscoveredModels } from "@/lib/shopify";
+
+export const metadata: Metadata = {
+  title: "Vemmie",
+  description:
+    "Shop Vemmie protective cases and accessories with secure Shopify checkout.",
+  alternates: {
+    canonical: absoluteUrl("/"),
+  },
+  openGraph: {
+    title: "Vemmie",
+    description:
+      "Shop Vemmie protective cases and accessories with secure Shopify checkout.",
+    url: absoluteUrl("/"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Vemmie",
+    description:
+      "Shop Vemmie protective cases and accessories with secure Shopify checkout.",
+  },
+};
 
 /**
  * HomePage
@@ -14,15 +38,23 @@ import { getAllProducts, getDiscoveredModels } from "@/lib/shopify";
  */
 export default async function HomePage() {
   try {
-    const [products, models] = await Promise.all([getAllProducts(), getDiscoveredModels()]);
+    const [products, models] = await Promise.all([
+      getAllProducts(),
+      getDiscoveredModels(),
+    ]);
 
     return (
       <div className="space-y-10">
         <section className="rounded-2xl bg-slate-900 px-6 py-12 text-white">
-          <p className="text-sm uppercase tracking-[0.2em] text-slate-300">Vemmie TPU Collection</p>
-          <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">Protect your iPhone 17 with a clean TPU fit.</h1>
+          <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
+            Vemmie TPU Collection
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">
+            Protect your iPhone 17 with a clean TPU fit.
+          </h1>
           <p className="mt-3 max-w-2xl text-slate-300">
-            Minimal case design, reliable daily protection, and secure Shopify checkout.
+            Minimal case design, reliable daily protection, and secure Shopify
+            checkout.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             {models.map((model) => (
@@ -44,10 +76,13 @@ export default async function HomePage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold text-slate-900">Featured Products</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Featured Products
+          </h2>
           {products.length === 0 ? (
             <p className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              No products found. In Shopify, check product availability to the Headless sales channel.
+              No products found. In Shopify, check product availability to the
+              Headless sales channel.
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -62,7 +97,8 @@ export default async function HomePage() {
   } catch (error) {
     return (
       <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Could not load products from Shopify. Check your Storefront API credentials and Headless channel access.
+        Could not load products from Shopify. Check your Storefront API
+        credentials and Headless channel access.
       </div>
     );
   }
